@@ -1,0 +1,216 @@
+REMOVE "*" FROM L1_MARKS ------------- mydata$S1_MARKS <- gsub("[*]","",mydata$S1_MARKS)
+
+WRITE TO CSV ------------ write.csv(mydata, file="new_Group24.csv")
+
+READ FROM CSV ------------ mydata <- read.csv("Group24Data.csv")
+
+REPLACE OUTLIERS WITH MEAN ------------ marks <- mean(as.numeric(mydata$S1_MARKS) ,na.rm=TRUE )
+										mydata$S1_MARKS <- gsub("888", mean(marks, na.rm=TRUE), mydata$S1_MARKS)
+
+REPLACE NA WITH MEAN ------------- mydata$L1_MARKS[is.na(mydata$L1_MARKS)] <- mean(as.numeric(mydata$L1_MARKS) ,na.rm=TRUE )
+
+NORMALIZED RESULT AS TABLE ------------ prop.table(table(mydata$NRC_MEDIUM, mydata$NRC_RESULT))
+
+Decision Trees ------------ marks_mydata <- mydata[-c(1:16, 18,20,22,24,26,28:30,32:39)]
+							testrecords <- marks_mydata[testindex,]
+							traindrecords <- marks_mydata[-testindex,]
+							dtfit <- rpart(NRC_CLASS~L1_MARKS+L2_MARKS+L3_MARKS+S1_MARKS+S2_MARKS+S3_MARKS ,data=marks_mydata, method="class")
+							
+		DISC + CLASSI		dtfit <- rpart(NRC_CLASS~L1_CLASS+L2_CLASS+L3_CLASS+S1_CLASS+S2_CLASS+S3_CLASS, data=disc_mydata, method="class")
+							
+Regression + Classificaton --------- L1,L2,L3 - r**2 = 0.954
+									 marks_mydata <- mydata[-c(1:16, 18,20,22,24,26,28,30,32:39)]
+									 regfit <- lm(TOTAL_MARKS~L3_MARKS +L1_MARKS+L2_MARKS, data=marks_mydata)
+									 summary(regfit)
+									 plot(disc_mydata$L1_MARKS+disc_mydata$S2_MARKS+disc_mydata$L2_MARKS, disc_mydata$TOTAL_MARKS, 
+									 xlim=c(min(disc_mydata$L1_MARKS+disc_mydata$S2_MARKS+disc_mydata$L2_MARKS)-5, 
+									 max(disc_mydata$L1_MARKS+disc_mydata$S2_MARKS+disc_mydata$L2_MARKS)+5), 
+									 ylim=c(min(disc_mydata$TOTAL_MARKS)-10, max(disc_mydata$TOTAL_MARKS)+10))
+					
+									 CLASSIFICATION ------- SVM/KNN
+									 marks_mydata <- mydata[-c(1:16, 17,18,20,22,24,25,26,27,28,29,30,31,32,34:42)]
+									 index <- 1:nrow(marks_mydata)
+									 testindex <- sample(index, trunc(length(index)/3))
+									 testrecords <- marks_mydata[testindex,]
+									 trainrecords <- marks_mydata[-testindex,]
+									 svmmodel <- svm(NRC_CLASS~., data = trainrecords)
+									 svmpredict <- predict(svmmodel, testrecords[,-4])
+									 svmconfmat <- table(true = testrecords[,4], pred = svmpredict)
+									 svmconfmat
+									 
+									 KNN
+									 #my_kknn <- kknn(NRC_CLASS~L1_MARKS+L2_MARKS+S2_MARKS, trainrecords, testrecords, distance=1, kernel="triangular")
+									 knn.pred <- kkn(train, test, cl, k-value)
+									 confmat <- table(testclass, pred=knn.pred)
+									 
+									 DO FOR ALL THE CLASSIFIERS AND BUILD A TABLE
+									 
+									 Random Forest - L1, S3
+									 ERROR...
+									 
+									 
+
+Discretizarion --------------- check <- function(x) { if (x>=85) {r <- "D"} 
+											else if((x < 85) & (x>=70)) {r <- "1"}
+											else if((x < 70) & (x>=50)) {r <- "2"}
+											else if((x < 50) & (x>=30)) {r <- "PASS"}
+											else { r<- "FAIL"}
+											return(r)
+											}
+
+							   new_L1 <- sapply(marks_mydata$L1_MARKS, check)
+
+Clustering + Association rules ----------- Apply Kmeans...DBSCAN ??
+										   new_data$clu <- factor(new_data.kmeans$cluster)
+										   DESCRIPTIVE STATISTICS FOLLOWED BY ASSOCIATION RULES
+										   Do BOX PLOT for each cluster...
+										   
+										   n1 <- split(new_data, new_data$clu)
+										   new_1 <- n1[[1]]
+										   mew_1 <- m1[[1]]
+										   DS - new_1, new_2, new_3, new_4
+										   AR - mew_1, mew_2,...
+										   rules <<- apriori(mew_1[-c(1, 2, 3, 9, 14, 19:32,34:41)],
+										   parameter=list(minlen=2, supp=0.01, conf=0.7),
+										   appearance=list(lhs=c("URBAN_RURAL=U"), default="rhs"),
+										   control = list(verbose=T))
+										   
+										   DBSCAN
+										   
+										   
+										   
+
+Urban Rural Characteristics ------------ urban_rural <- mydata[-c(1:3, 6:10, 14:29, 32:45)]
+										 urban_rural_class <- mydata[-c(1:3, 6:10, 14:29, 32:38)]
+										 Apriori and then Redundancy
+										 
+										 Divide is obvious...in U medium=E, school_type=U
+										 in R medium=K, school_type=G, candidate_type=RF,...
+										 
+										 AR on Urban_Rural is not giving much information so I am using cross-cluster analysis for this...
+										 
+										 										   
+Confidence Intervals ------------- d <- split(mydata, mydata$DIST_CODE)
+								   d1 <- d[[1]]
+								   m <- sum(d1$NRC_RESULT=="P")/total
+								   sd <- sqrt((m*(1-m)/total))
+								   error <- 2*sd
+								   left <- m-error
+								   right <- m+error
+								   conf_int
+								   t.test(conf_int$passPer, conf.level=0.99)
+								   t
+								   
+								   for(i in 1:34){ d2 <- d1[[i]]
+								   m <- sum(d2$NRC_RESULT=="P")/total
+								   x[i] <- m
+								   sd <- sqrt((m*(1-m)/total))
+								   error <- 2*sd
+								   left <- m-error
+								   right <- m+error
+								   l[i] <- left
+								   r[i] <- right								   
+								   }
+								   
+								   ind <- which.max(x)
+								   dist <- d[[ind]]
+								   rules <- apriori(dist[-c(1:4,6:10,14:29,32:45)])
+								   rules.sorted <- sort(rules, by="lift")
+								   subset.matrix <- is.subset(rules.sorted, rules.sorted)
+								   subset.matrix[lower.tri(subset.matrix, diag=T)] <- NA
+								   redundant <- colSums(subset.matrix, na.rm=T) >= 1
+								   rules.pruned <- rules.sorted[!redundant]
+								   inspect(rules.pruned)
+								   
+								   Min - 14(Kodagu)
+								   Max - 2(South Bangalore)
+								   
+
+Performance Charcteristics ------------ new_mydata <- mydata[-c(1,2,3,6:10,15:29,32:38)]
+										new_mydata$NRC_CASTE_CODE <- as.factor(new_mydata$NRC_CASTE_CODE)
+										rules <- apriori(new_mydata, ...)
+										Try the same for both D and FAIL and see if the top rules in D are in some rules of FAIL 
+										then they may be negative rules for the condition. So check if the subset has more value.
+										We get these only by looking at the observations...
+										
+										For class attributes, fail is obvious and so no information gain...So what you did ?
+										There might be some negative rules...tried this in last
+										
+										
+										
+DT for AR ----------- dtfit <- rpart(NRC_CLASS~SCHOOL_TYPE+URBAN_RURAL+NRC_CASTE_CODE+NRC_GENDER_CODE+CANDIDATE_TYPE, data=mydata, method="class")
+					  Use tree package, tree()
+					  Yes, it can be done. The top nodes will be the top rules...
+					  
+
+Cross Cluster Analysis ------------ 	g_mydata <- mydata[c(4,5,11,12,13,16,18,20,22,24,26,31)]
+										g_mydata$S2_MARKS <- as.numeric(g_mydata$S2_MARKS)
+										g_ss <- split(g_mydata, g_mydata$NRC_GENDER_CODE)
+										boys_mydata <- g_ss[[1]]
+										boys_mydata.cr <- apply(boys_mydata[,7:12],2,center_reduction)
+										boys_mydata.kmeans <- kmeans(boys_mydata.cr,centers=nb.classes,iter.max=40)
+										boys_mydata$clu <- factor(boys_mydata.kmeans$cluster)
+										b1 <- split(boys_mydata, boys_mydata$clu)
+										mean(b1[[3]]$L1_MARKS) - 2(highest),1,3
+										boys - 2, 3, 1
+										overall - 3, 1, 2
+										girls - 3, 2, 1
+										
+										Subplots for 3 clusters...boys and girls beside beside...
+										par(mfrow=c(2,2))
+										
+										boxplot(b1[[2]]$L1_MARKS, b1[[1]]$L1_MARKS, b1[[3]]$L1_MARKS, main="Boys performance in L1_Marks", 
+										xlab="clusters", ylab="number of students") 
+										
+										But we already know this! (Girls perform better than boys)
+										What's more interesting about these is when you try to make clusters on other attributes but not marks
+										
+										Show Characteristics in tables...3 tables for 3 clusters
+										
+										The clusters from C1 and C2 are similar as observed from statistical tests, even the other tests also so similarity.
+										When we do statistical testing we find similarity but when we actually look into clusters, we found some insights...
+										
+										Put circles in the PPT and make the points...
+										
+										Boys in cluster 2 - i.e 100 avg - Most are from U schools
+										But most are from Rural area...
+										#Majority of them are CASTE=4 - 82%
+										#All are from either English or Kannada Medium - 99%
+										#All candidates are RF type - 99%
+										
+										Girls in cluster 3 - i.e 100 avg - Majority from U and second is A
+										Majority from Urban area
+										#E or K medium
+										All candidates are RF type - 99%
+										
+										Boys in cluster 1 - i.e least - Majority people from G schools
+										Kannada Medium
+										All types of candidates - but mostly RF - 55%
+										
+										Girls in cluster 1 - i.e least - G school
+										Kannada Medium - 78%
+										
+										
+						   MEDIUM BASED
+						   				Divided into 2 Mediums..
+						   				e1 - has 3 clusters
+						   				k1 - has 3 clusters
+						   				
+						   				k1 - 3, 2, 1
+						   				e1 - 3, 2, 1
+						   				
+						   				Statistical tests...done! - boxplot
+						   				
+						   				Characteristics...
+						   				high - K- most are girls
+						   				       E -both
+						   				       
+						   				medium - E - boys
+						   				         K - both
+						   				         
+						   				low - K - boys
+						   				      E - boys
+						   				
+						   				Rural students are taking Kannada more than Urban people
+						   				
+						   				
